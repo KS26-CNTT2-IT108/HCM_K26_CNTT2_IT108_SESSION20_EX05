@@ -1,0 +1,43 @@
+SESSION20
+Bài 5 : Xây dựng cơ chế xác thực an toàn cho Crypto Wallet
+
+Tên lớp: HCM K26 CNTT2
+Môn học: Nhập môn công nghệ thông tin
+Họ và tên: LƯƠNG THANH THƯ
+
+Phần 1: Thiết kế kiến trúc (luồng dữ liệu 3 lớp, trình bày bằng chữ)
+Luồng đi từ đầu đến cuối (đọc từ trên xuống):
+	Bước 1: Người dùng gửi email và mật khẩu lên máy chủ.
+Lớp 1 (thứ bạn biết): máy chủ so khớp với mật khẩu đã băm.
+Sai mật khẩu thì chặn, đúng thì đi tiếp.
+	Bước 2: Máy chủ yêu cầu mã TOTP.
+Lớp 2 (thứ bạn có): app Authenticator trên điện thoại lấy khóa bí mật + giờ hiện tại để ra mã 6 số, đổi mỗi 30 giây.
+Người dùng nhập mã. Máy chủ tự tính mã bằng cùng khóa và cùng thời gian rồi so khớp.
+Sai hoặc hết hạn thì chặn, khớp thì đi tiếp.
+	Bước 3: Máy chủ yêu cầu xác nhận giao dịch.
+Lớp 3 (thứ bạn là): người dùng quét vân tay hoặc khuôn mặt trên thiết bị.
+Sai thì chặn, đúng thì giao dịch được duyệt.
+
+Bảng tóm tắt 3 lớp phối hợp với nhau:
+Lớp	Yếu tố xác thực				Máy chủ kiểm tra gì			Hacker có mật khẩu thì sao
+1	Thứ bạn biết: mật khẩu			Mật khẩu có khớp không			Qua được
+2	Thứ bạn có: điện thoại (TOTP)		Mã 6 số có khớp, còn hạn không		Bị chặn vì không có điện thoại
+3	Thứ bạn là: vân tay, khuôn mặt		Sinh trắc học có đúng chủ không		Bị chặn vì không có vân tay
+
+Vì sao ba lớp phối hợp ngăn được hacker dù có mật khẩu:
+	Mỗi lớp dựa trên một loại thứ khác nhau, nên lấy được một thứ không kéo theo hai thứ còn lại.
+	Hacker chỉ có mật khẩu (qua phishing, rò rỉ) thì dừng ở Lớp 2 vì không có khóa bí mật nằm trong điện thoại.
+	Mã TOTP đổi sau 30 giây và mã nào chỉ dùng được một lần, nên mã bị nhìn trộm nhanh mất giá trị.
+	Có cả mật khẩu và mã TOTP vẫn chưa đủ, vì Lớp 3 cần sinh trắc học gắn với chủ ví.
+Ví dụ: như một kho báu có ba lớp cửa, ba chìa khác nhau do ba người khác nhau giữ. Lấy được một chìa vẫn không mở được cả kho.
+
+Phần 2: Xử lý bẫy (người dùng trên máy bay, không internet)
+Vẫn lấy được mã OTP, vì TOTP được tính ngay trong điện thoại, không cần mạng hay sóng.
+Cách hoạt động: Lúc thiết lập, người dùng quét mã QR một lần để app lưu sẵn khóa bí mật.
+		App lấy khóa bí mật cộng với đồng hồ của điện thoại để ra mã 6 số.
+		Máy chủ cũng tự tính theo cách đó nên hai bên khớp mà không cần gửi mã cho nhau.
+
+Lưu ý:  Giờ trên điện thoại phải đúng (máy chủ chỉ cho phép lệch rất nhỏ).
+	Không dùng SMS để nhận mã vì SMS cần sóng, đây là lý do chọn TOTP.
+	Việc gửi giao dịch lên mạng vẫn cần internet. Trên máy bay người dùng có thể lấy mã sẵn rồi gửi khi có Wi-Fi hoặc sau khi hạ cánh.
+	Dự phòng: cất Backup Codes (in giấy hoặc trong Password Manager) phòng khi hỏng hoặc mất điện thoại.
